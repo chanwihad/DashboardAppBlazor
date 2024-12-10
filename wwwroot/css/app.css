@@ -1,0 +1,14 @@
+
+.collapse {
+    display: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.nav-expanded {
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler-icon {
+    cursor: pointer;
+}

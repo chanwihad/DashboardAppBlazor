@@ -1,0 +1,67 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">DashboardApp</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <a class="nav-link" @onclick="ToggleProducts">
+                <span class="oi oi-box" aria-hidden="true"></span> Products
+            </a>
+            @if (showProducts)
+            {
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="products/list">List</NavLink>
+                    </li>
+                </ul>
+            }
+        </li>
+        
+        <li class="nav-item px-3">
+            <a class="nav-link" @onclick="ToggleUserManagement">
+                <span class="oi oi-people" aria-hidden="true"></span> User Management
+            </a>
+            @if (showUserManagement)
+            {
+                <ul class="nav flex-column ms-3">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="user">User</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="role">Role</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="menu">Menu</NavLink>
+                    </li>
+                </ul>
+            }
+        </li>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool showUserManagement = false;
+    private bool showProducts = false;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleUserManagement()
+    {
+        showUserManagement = !showUserManagement;
+    }
+
+    private void ToggleProducts()
+    {
+        showProducts = !showProducts;
+    }
+}

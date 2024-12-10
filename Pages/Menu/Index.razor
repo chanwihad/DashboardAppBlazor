@@ -1,0 +1,273 @@
+@page "/menu"
+@using DashboardApp.Services
+@using DashboardApp.Models
+@inject MenuService MenuService
+
+<PageTitle>Menu List</PageTitle>
+
+<h1>Menu List</h1>
+
+@if (menus == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex justify-content mb-3">
+        <button class="btn btn-primary" @onclick="OpenCreateMenu">Add Menu</button>
+    </div>
+
+    <form method="get" @onsubmit="SearchMenus">
+        <div class="d-flex w-100 mb-3">
+            <div class="flex-grow-1">
+                <input type="text" class="form-control" style="width:99%" id="searchQuery" name="searchQuery" placeholder="Search by Name or Description" @bind="searchQuery">
+            </div>
+            <div class="ms-3">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+    </form>
+
+    @if (menus.Count == 0)
+    {
+        <div class="alert alert-warning" role="alert">
+            No menus found matching your search.
+        </div>
+    }
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var menu in menus)
+            {
+                <tr>
+                    <td>@menu.Name</td>
+                    <td>@menu.Description</td>
+                    <td>
+                        <button class="btn btn-success" @onclick="() => OpenEditMenu(menu)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteMenu(menu)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination justify-content-end">
+        <select class="mx-2" @onchange="OnItemsPerPageChanged">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+
+        <button class="btn btn-info" @onclick="() => LoadMenus(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>
+        <span class="mt-2 mx-2"> Page @PageNumber of @TotalPages </span>
+        <button class="btn btn-info" @onclick="() => LoadMenus(PageNumber + 1)" disabled="@((PageNumber >= TotalPages))">Next</button>
+    </div>
+
+
+}
+
+<div class="modal" tabindex="-1" style="display:@(showModal ? "block" : "none")">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@modalTitle</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <EditForm Model="currentMenu" OnValidSubmit="SaveMenu">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="form-group">
+                        <label for="Name">Name</label>
+                        <InputText id="Name" class="form-control" @bind-Value="currentMenu.Name" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Description">Description</label>
+                        <InputText id="Description" class="form-control" @bind-Value="currentMenu.Description" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Level1">Level 1</label>
+                        <InputText id="Level1" class="form-control" @bind-Value="currentMenu.Level1" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Level2">Level 2</label>
+                        <InputText id="Level2" class="form-control" @bind-Value="currentMenu.Level2" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Level3">Level 3</label>
+                        <InputText id="Level3" class="form-control" @bind-Value="currentMenu.Level3" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Level4">Level 4</label>
+                        <InputText id="Level4" class="form-control" @bind-Value="currentMenu.Level4" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Icon">Icon</label>
+                        <InputText id="Icon" class="form-control" @bind-Value="currentMenu.Icon" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Url">Url</label>
+                        <InputText id="Url" class="form-control" @bind-Value="currentMenu.Url" />
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">Save</button>
+                        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showModal)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<Menu> menus = new List<Menu>();
+    private Menu currentMenu = new Menu();
+    private bool showModal = false;
+    private string modalTitle;
+    private string searchQuery = string.Empty;
+    private int PageNumber = 1;
+    private int PageSize = 5;
+    private int TotalPages = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMenus(PageNumber);
+    }
+    
+    private async Task LoadMenus(int pageNumber)
+    {
+        try
+        {
+            var response = await MenuService.GetMenusAsync(pageNumber, PageSize, searchQuery);
+            
+            if (response != null && response.Menus != null && response.Menus.Any())
+            {
+                menus = response.Menus;
+                TotalPages = response.TotalPages;
+                PageNumber = response.PageNumber;
+            }
+            else
+            {
+                menus = new List<Menu>(); 
+                TotalPages = 1; 
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            menus = new List<Menu>();
+            TotalPages = 1; 
+            Console.WriteLine($"Error loading menus: {ex.Message}");
+        }
+
+    }
+
+    private async Task Next()
+    {
+        await LoadMenus(PageNumber++);
+    }
+
+    private async Task Back()
+    {
+        await LoadMenus(PageNumber--);
+    }
+
+    private async Task ResizePage(int pageSize)
+    {
+        PageSize = pageSize;
+        await LoadMenus(1);
+    }
+
+    private async Task OnItemsPerPageChanged(ChangeEventArgs e)
+    {
+        PageSize = int.Parse(e.Value.ToString());
+        PageNumber = 1; 
+        await LoadMenus(PageNumber);
+    }
+
+
+    private async Task OnSearchInput()
+    {
+        PageNumber = 1;
+        await LoadMenus(PageNumber);
+    }
+
+    private async Task SearchMenus()
+    {
+       PageNumber = 1;
+        await LoadMenus(PageNumber);
+    }
+
+    private void OpenCreateMenu()
+    {
+        currentMenu = new Menu();
+        modalTitle = "Add Menu";
+        showModal = true;
+    }
+
+    private void OpenEditMenu(Menu menu)
+    {
+        currentMenu = menu;
+        modalTitle = "Edit Menu";
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private async Task SaveMenu()
+    {
+        if (string.IsNullOrEmpty(currentMenu.Name) || string.IsNullOrEmpty(currentMenu.Description))
+        {
+            return;
+        }
+
+        if (currentMenu.Id == 0)
+        {
+            var response = await MenuService.CreateMenu(currentMenu);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadMenus(PageNumber);
+                showModal = false;
+            }
+        }
+        else
+        {
+            var response = await MenuService.UpdateMenu(currentMenu.Id, currentMenu);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadMenus(PageNumber);
+                showModal = false;
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        showModal = false;
+    }
+
+    private async Task DeleteMenu(Menu menu)
+    {
+        var response = await MenuService.DeleteMenu(menu.Id);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadMenus(PageNumber);
+        }
+    }
+
+}

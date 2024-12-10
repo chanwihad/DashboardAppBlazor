@@ -1,0 +1,12 @@
+﻿@page "/counter"
+@index 
+<br>
+<br>
+<button class = "btn btn-danger" @onclick = "counter"> PRESS ME  </button>
+@code{
+private int index = 0;
+private void counter()
+{
+    index = index + 1; 
+}
+}

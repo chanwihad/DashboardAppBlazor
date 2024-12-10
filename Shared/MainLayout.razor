@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<div class="sidebar">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="top-row px-4">
+        <button class="btn btn-link" @onclick="Logout">Logout</button>
+    </div>
+
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
+
+@code {
+    private async Task Logout()
+    {
+        // Hapus token dan username dari sessionStorage
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "authToken");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
+
+        // Redirect ke halaman login
+        Navigation.NavigateTo("/login", true);
+    }
+}
