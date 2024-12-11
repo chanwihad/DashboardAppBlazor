@@ -22,6 +22,14 @@ build_property._RazorSourceGeneratorDebug =
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/ChangePassword.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxDaGFuZ2VQYXNzd29yZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/ForgetPassword.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxGb3JnZXRQYXNzd29yZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/Login.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -40,6 +48,14 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Menu/Index.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWVudVxJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Product/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdFxJbmRleC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Role/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUm9sZVxJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/User/Index.razor]

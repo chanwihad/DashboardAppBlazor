@@ -10,31 +10,63 @@ using DashboardApp.Models;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Json;  
 using System.Collections.Generic;
-
+using Microsoft.JSInterop;
 
 namespace DashboardApp.Services
 {
-
     public class MenuApiClient
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly string _clientId;  
+        private string _clientId;  
         private readonly string _secretKey;    
-        private readonly IHttpContextAccessor _httpContextAccessor; 
+        private readonly IJSRuntime _jsRuntime;
 
-        public MenuApiClient(HttpClient httpClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public MenuApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
         {
             _httpClient = httpClient;
             _configuration = configuration;
-            _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]); 
+            _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
             _secretKey = _configuration["ApiSettings:SecretKey"];
-            _httpContextAccessor = httpContextAccessor;
-            _clientId = _httpContextAccessor.HttpContext.Session.GetString("ClientId");
+            _jsRuntime = jsRuntime;
         }
 
-        public async Task<List<Menu>> GetMenus(string searchQuery = "")
+        public async Task InitializeClientIdAsync()
         {
+            if (await CheckLoginAsync())
+            {
+                _clientId = await GetClientIdFromSession();
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("User is not logged in.");
+            }
+        }
+
+        private async Task<bool> CheckLoginAsync()
+        {
+            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
+            var clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
+
+            return !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(clientId);
+        }
+
+        private async Task<string> GetClientIdFromSession()
+        {
+            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
+        }
+
+        public async Task<MenuResponse> GetMenusAsync(int page, int itemsPerPage, string searchQuery = "")
+        {
+            await InitializeClientIdAsync(); 
+            AddSecurityHeaders("GET", "api/menu", "");
+            return await _httpClient.GetFromJsonAsync<MenuResponse>(
+                $"/api/menu?pageNumber={page}&pageSize={itemsPerPage}&searchQuery={searchQuery}");
+        }
+
+        public async Task<List<Menu>> GetMenusOnly(string searchQuery = "")
+        {
+            await InitializeClientIdAsync(); 
             AddSecurityHeaders("GET", "api/menu", "");
             var response = await _httpClient.GetFromJsonAsync<List<Menu>>($"api/menu?searchQuery={searchQuery}");
             return response;
@@ -42,6 +74,7 @@ namespace DashboardApp.Services
 
         public async Task<HttpResponseMessage> CreateMenu(Menu model)
         {
+            await InitializeClientIdAsync(); 
             var body = JsonSerializer.Serialize(model);
             AddSecurityHeaders("POST", "api/menu", body);
             var response = await _httpClient.PostAsJsonAsync("api/menu", model);
@@ -50,6 +83,7 @@ namespace DashboardApp.Services
 
         public async Task<Menu> GetMenu(int id)
         {
+            await InitializeClientIdAsync(); 
             AddSecurityHeaders("GET", $"api/menu/{id}", "");
             var response = await _httpClient.GetFromJsonAsync<Menu>($"api/menu/{id}");
             return response;
@@ -57,6 +91,7 @@ namespace DashboardApp.Services
 
         public async Task<HttpResponseMessage> UpdateMenu(int id, Menu model)
         {
+            await InitializeClientIdAsync(); 
             var body = JsonSerializer.Serialize(model);
             AddSecurityHeaders("PUT", $"api/menu/{id}", body);
             var response = await _httpClient.PutAsJsonAsync($"api/menu/{id}", model);
@@ -70,11 +105,11 @@ namespace DashboardApp.Services
 
         public async Task<HttpResponseMessage> DeleteMenu(int id)
         {
+            await InitializeClientIdAsync(); 
             AddSecurityHeaders("DELETE", $"api/menu/{id}", "");
             var response = await _httpClient.DeleteAsync($"api/menu/{id}");
             return response;
         }
-
 
         private string GenerateSignature(string method, string rawUrl, string clientId, string timeStamp, string body)
         {

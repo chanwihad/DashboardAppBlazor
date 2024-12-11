@@ -27,14 +27,13 @@ namespace DashboardApp
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<MenuService>(); 
             services.AddScoped<AuthApiClient>(); 
+            services.AddScoped<PermissionHelper>(); 
+            services.AddScoped<UserApiClient>(); 
+            services.AddScoped<RoleApiClient>(); 
+            services.AddScoped<MenuApiClient>(); 
+            services.AddScoped<ProductApiClient>(); 
 
-            services.AddHttpClient<MenuService>(client =>
-            {
-                var apiBaseUrl = Configuration.GetValue<string>("ApiBaseUrl"); 
-                client.BaseAddress = new Uri(apiBaseUrl); 
-            });
             services.AddHttpClient<AuthApiClient>(client =>
             {
                 var apiBaseUrl = Configuration.GetValue<string>("ApiBaseUrl"); 

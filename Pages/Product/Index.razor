@@ -1,12 +1,12 @@
-@page "/menu"
+@page "/product"
 @using DashboardApp.Services
 @using DashboardApp.Models
-@inject MenuApiClient MenuService
+@inject ProductApiClient ProductService
 @inject NavigationManager Navigation
 
-<PageTitle>Menu List</PageTitle>
+<PageTitle>Product List</PageTitle>
 
-<h1>Menu List</h1>
+<h1>Product List</h1>
 
 @if (isLoading)
 {
@@ -15,10 +15,10 @@
 else
 {
     <div class="d-flex justify-content mb-3">
-        <button class="btn btn-primary" @onclick="OpenCreateMenu">Add Menu</button>
+        <button class="btn btn-primary" @onclick="OpenCreateProduct">Add Product</button>
     </div>
 
-    <form method="get" @onsubmit="SearchMenus">
+    <form method="get" @onsubmit="SearchProducts">
         <div class="d-flex w-100 mb-3">
             <div class="flex-grow-1">
                 <input type="text" class="form-control" style="width:99%" id="searchQuery" name="searchQuery" placeholder="Search by Name or Description" @bind="searchQuery">
@@ -29,10 +29,10 @@ else
         </div>
     </form>
 
-    @if (menus.Count == 0)
+    @if (products.Count == 0)
     {
         <div class="alert alert-warning" role="alert">
-            No menus found matching your search.
+            No products found matching your search.
         </div>
     }
 
@@ -40,19 +40,19 @@ else
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Description</th>
+                <th>Price</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var menu in menus)
+            @foreach (var product in products)
             {
                 <tr>
-                    <td>@menu.Name</td>
-                    <td>@menu.Description</td>
+                    <td>@product.Name</td>
+                    <td>@product.Price</td>
                     <td>
-                        <button class="btn btn-success" @onclick="() => OpenEditMenu(menu)">Edit</button>
-                        <button class="btn btn-danger" @onclick="() => DeleteMenu(menu)">Delete</button>
+                        <button class="btn btn-success" @onclick="() => OpenEditProduct(product)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteProduct(product)">Delete</button>
                     </td>
                 </tr>
             }
@@ -67,9 +67,9 @@ else
             <option value="100">100</option>
         </select>
 
-        <button class="btn btn-info" @onclick="() => LoadMenus(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>
+        <button class="btn btn-info" @onclick="() => LoadProducts(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>
         <span class="mt-2 mx-2"> Page @PageNumber of @TotalPages </span>
-        <button class="btn btn-info" @onclick="() => LoadMenus(PageNumber + 1)" disabled="@((PageNumber >= TotalPages))">Next</button>
+        <button class="btn btn-info" @onclick="() => LoadProducts(PageNumber + 1)" disabled="@((PageNumber >= TotalPages))">Next</button>
     </div>
 
 
@@ -83,40 +83,16 @@ else
                 <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
-                <EditForm Model="currentMenu" OnValidSubmit="SaveMenu">
+                <EditForm Model="currentProduct" OnValidSubmit="SaveProduct">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
                     <div class="form-group">
                         <label for="Name">Name</label>
-                        <InputText id="Name" class="form-control" @bind-Value="currentMenu.Name" />
+                        <InputText id="Name" class="form-control" @bind-Value="currentProduct.Name" />
                     </div>
                     <div class="form-group">
-                        <label for="Description">Description</label>
-                        <InputText id="Description" class="form-control" @bind-Value="currentMenu.Description" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Level1">Level 1</label>
-                        <InputText id="Level1" class="form-control" @bind-Value="currentMenu.Level1" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Level2">Level 2</label>
-                        <InputText id="Level2" class="form-control" @bind-Value="currentMenu.Level2" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Level3">Level 3</label>
-                        <InputText id="Level3" class="form-control" @bind-Value="currentMenu.Level3" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Level4">Level 4</label>
-                        <InputText id="Level4" class="form-control" @bind-Value="currentMenu.Level4" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Icon">Icon</label>
-                        <InputText id="Icon" class="form-control" @bind-Value="currentMenu.Icon" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Url">Url</label>
-                        <InputText id="Url" class="form-control" @bind-Value="currentMenu.Url" />
+                        <label for="Price">Price</label>
+                        <InputNumber id="Price" class="form-control" @bind-Value="currentProduct.Price" />
                     </div>
                     <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary me-2">Save</button>
@@ -134,8 +110,8 @@ else
 }
 
 @code {
-    private List<Menu> menus = new List<Menu>();
-    private Menu currentMenu = new Menu();
+    private List<Product> products = new List<Product>();
+    private Product currentProduct = new Product();
     private bool showModal = false;
     private string modalTitle;
     private string searchQuery = string.Empty;
@@ -148,8 +124,8 @@ else
     {
         try
         {
-            await MenuService.InitializeClientIdAsync();
-            await LoadMenus(PageNumber);
+            await ProductService.InitializeClientIdAsync();
+            await LoadProducts(PageNumber);
         }
         catch (UnauthorizedAccessException)
         {
@@ -161,21 +137,21 @@ else
         }
     }
     
-    private async Task LoadMenus(int pageNumber = 1)
+    private async Task LoadProducts(int pageNumber = 1)
     {
         isLoading = true;
         try
         {
-            var response = await MenuService.GetMenusAsync(pageNumber, PageSize, searchQuery);
-            menus = response?.Menus ?? new List<Menu>();
+            var response = await ProductService.GetProductsAsync(pageNumber, PageSize, searchQuery);
+            products = response?.Products ?? new List<Product>();
             TotalPages = response?.TotalPages ?? 1;
             PageNumber = response?.PageNumber ?? 1;
         }
         catch (HttpRequestException ex)
         {
-            menus = new List<Menu>();
+            products = new List<Product>();
             TotalPages = 1;
-            Console.WriteLine($"Error loading menus: {ex.Message}");
+            Console.WriteLine($"Error loading products: {ex.Message}");
         }
         finally
         {
@@ -186,51 +162,51 @@ else
 
     private async Task Next()
     {
-        await LoadMenus(PageNumber++);
+        await LoadProducts(PageNumber++);
     }
 
     private async Task Back()
     {
-        await LoadMenus(PageNumber--);
+        await LoadProducts(PageNumber--);
     }
 
     private async Task ResizePage(int pageSize)
     {
         PageSize = pageSize;
-        await LoadMenus(1);
+        await LoadProducts(1);
     }
 
     private async Task OnItemsPerPageChanged(ChangeEventArgs e)
     {
         PageSize = int.Parse(e.Value.ToString());
         PageNumber = 1; 
-        await LoadMenus(PageNumber);
+        await LoadProducts(PageNumber);
     }
 
 
     private async Task OnSearchInput()
     {
         PageNumber = 1;
-        await LoadMenus(PageNumber);
+        await LoadProducts(PageNumber);
     }
 
-    private async Task SearchMenus()
+    private async Task SearchProducts()
     {
        PageNumber = 1;
-        await LoadMenus(PageNumber);
+        await LoadProducts(PageNumber);
     }
 
-    private void OpenCreateMenu()
+    private void OpenCreateProduct()
     {
-        currentMenu = new Menu();
-        modalTitle = "Add Menu";
+        currentProduct = new Product();
+        modalTitle = "Add Product";
         showModal = true;
     }
 
-    private void OpenEditMenu(Menu menu)
+    private void OpenEditProduct(Product product)
     {
-        currentMenu = menu;
-        modalTitle = "Edit Menu";
+        currentProduct = product;
+        modalTitle = "Edit Product";
         showModal = true;
     }
 
@@ -239,28 +215,28 @@ else
         showModal = false;
     }
 
-    private async Task SaveMenu()
+    private async Task SaveProduct()
     {
-        if (string.IsNullOrEmpty(currentMenu.Name) || string.IsNullOrEmpty(currentMenu.Description))
+        if (string.IsNullOrEmpty(currentProduct.Name))
         {
             return;
         }
 
-        if (currentMenu.Id == 0)
+        if (currentProduct.Id == 0)
         {
-            var response = await MenuService.CreateMenu(currentMenu);
+            var response = await ProductService.CreateProductAsync(currentProduct);
             if (response.IsSuccessStatusCode)
             {
-                await LoadMenus(PageNumber);
+                await LoadProducts(PageNumber);
                 showModal = false;
             }
         }
         else
         {
-            var response = await MenuService.UpdateMenu(currentMenu.Id, currentMenu);
+            var response = await ProductService.UpdateProductAsync(currentProduct.Id, currentProduct);
             if (response.IsSuccessStatusCode)
             {
-                await LoadMenus(PageNumber);
+                await LoadProducts(PageNumber);
                 showModal = false;
             }
         }
@@ -271,12 +247,12 @@ else
         showModal = false;
     }
 
-    private async Task DeleteMenu(Menu menu)
+    private async Task DeleteProduct(Product product)
     {
-        var response = await MenuService.DeleteMenu(menu.Id);
+        var response = await ProductService.DeleteProductAsync(product.Id);
         if (response.IsSuccessStatusCode)
         {
-            await LoadMenus(PageNumber);
+            await LoadProducts(PageNumber);
         }
     }
 

@@ -51,6 +51,7 @@ C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\DashboardA
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\DashboardApp.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\DashboardApp.RazorAssemblyInfo.cache
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\DashboardApp.RazorAssemblyInfo.cs
+C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\DashboardApp.sourcelink.json
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\Kings\Documents\Project\Blazor\DashboardApp\obj\Debug\net8.0\staticwebassets\msbuild.DashboardApp.Microsoft.AspNetCore.StaticWebAssets.props

@@ -1,30 +1,31 @@
+using Microsoft.JSInterop;
 using System;
-using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 using DashboardApp.Models;
 using System.Collections.Generic;
-using System.Linq;  
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DashboardApp.Services
 {
     public class PermissionHelper
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IJSRuntime _jsRuntime;
 
-        public PermissionHelper(IHttpContextAccessor httpContextAccessor)
+        public PermissionHelper(IJSRuntime jsRuntime)
         {
-            _httpContextAccessor = httpContextAccessor;
+            _jsRuntime = jsRuntime;
         }
 
-        public bool CheckLogin()
+        public async Task<bool> CheckLogin()
         {
-            var token = _httpContextAccessor.HttpContext.Session.GetString("Token");
+            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
             return !string.IsNullOrEmpty(token);
         }
 
-        public bool HasAccess(string action, string url)
+        public async Task<bool> HasAccess(string action, string url)
         {
-            var menusJson = _httpContextAccessor.HttpContext.Session.GetString("UserMenus");
+            var menusJson = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "UserMenus");
             if (string.IsNullOrEmpty(menusJson))
             {
                 return false;
@@ -35,11 +36,10 @@ namespace DashboardApp.Services
             var menu = menus.FirstOrDefault(m => m.Url.Equals(url, StringComparison.OrdinalIgnoreCase));
             if (menu == null) return false;
 
-            var canAccess = _httpContextAccessor.HttpContext.Session.GetString(action);
-            if(canAccess == "false") return false;
+            var canAccess = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", action);
+            if (canAccess == "false") return false;
 
             return true;
         }
     }
-
 }

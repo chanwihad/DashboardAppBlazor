@@ -8,8 +8,18 @@
 
 <div class="main">
     <div class="top-row px-4">
-        <button class="btn btn-link" @onclick="Logout">Logout</button>
+        <div class="dropdown">
+            <button class="btn btn-link dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                Admin
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="userMenu">
+                <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item text-danger" @onclick="Logout">Logout</button></li>
+            </ul>
+        </div>
     </div>
+
 
     <div class="content px-4">
         @Body
@@ -19,11 +29,20 @@
 @code {
     private async Task Logout()
     {
-        // Hapus token dan username dari sessionStorage
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "authToken");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "Token");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "Username");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "ClientId");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "UserMenus");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanCreate");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanView");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanUpdate");
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanDelete");
 
-        // Redirect ke halaman login
         Navigation.NavigateTo("/login", true);
+    }
+
+    private async Task ChangePassword()
+    {
+        Navigation.NavigateTo("/change-password");
     }
 }

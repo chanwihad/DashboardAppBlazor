@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using DashboardApp.Models;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Json;  
+using Microsoft.JSInterop;
 
 namespace DashboardApp.Services
 {
@@ -17,17 +18,41 @@ namespace DashboardApp.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly string _clientId;  
+        private string _clientId;  
         private readonly string _secretKey;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IJSRuntime _jsRuntime;
 
-        public AuthApiClient(HttpClient httpClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public AuthApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _secretKey = _configuration["ApiSettings:SecretKey"];
-            _httpContextAccessor = httpContextAccessor;
-            _clientId = _httpContextAccessor.HttpContext.Session.GetString("ClientId");
+            _jsRuntime = jsRuntime;
+        }
+
+        public async Task InitializeClientIdAsync()
+        {
+            if (await CheckLoginAsync())
+            {
+                _clientId = await GetClientIdFromSession();
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("User is not logged in.");
+            }
+        }
+
+        private async Task<bool> CheckLoginAsync()
+        {
+            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
+            var clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
+
+            return !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(clientId);
+        }
+
+        private async Task<string> GetClientIdFromSession()
+        {
+            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
         }
 
         public async Task<bool> RegisterAsync(string username, string fullName, string email, string password)
@@ -64,14 +89,23 @@ namespace DashboardApp.Services
                 var result = await response.Content.ReadFromJsonAsync<LoginResponseModel>();
                 if (result != null)
                 {
-                    _httpContextAccessor.HttpContext.Session.SetString("Token", result.Token);
-                    _httpContextAccessor.HttpContext.Session.SetString("Username", result.Username);
-                    _httpContextAccessor.HttpContext.Session.SetString("ClientId", result.ClientId);
-                    _httpContextAccessor.HttpContext.Session.SetString("UserMenus", JsonSerializer.Serialize(result.Menus));
-                    _httpContextAccessor.HttpContext.Session.SetString("CanCreate", result.Permissions.CanCreate.ToString().ToLower());
-                    _httpContextAccessor.HttpContext.Session.SetString("CanView", result.Permissions.CanView.ToString().ToLower());
-                    _httpContextAccessor.HttpContext.Session.SetString("CanUpdate", result.Permissions.CanUpdate.ToString().ToLower());
-                    _httpContextAccessor.HttpContext.Session.SetString("CanDelete", result.Permissions.CanDelete.ToString().ToLower());
+                    // _httpContextAccessor.HttpContext.Session.SetString("Token", result.Token);
+                    // _httpContextAccessor.HttpContext.Session.SetString("Username", result.Username);
+                    // _httpContextAccessor.HttpContext.Session.SetString("ClientId", result.ClientId);
+                    // _httpContextAccessor.HttpContext.Session.SetString("UserMenus", JsonSerializer.Serialize(result.Menus));
+                    // _httpContextAccessor.HttpContext.Session.SetString("CanCreate", result.Permissions.CanCreate.ToString().ToLower());
+                    // _httpContextAccessor.HttpContext.Session.SetString("CanView", result.Permissions.CanView.ToString().ToLower());
+                    // _httpContextAccessor.HttpContext.Session.SetString("CanUpdate", result.Permissions.CanUpdate.ToString().ToLower());
+                    // _httpContextAccessor.HttpContext.Session.SetString("CanDelete", result.Permissions.CanDelete.ToString().ToLower());
+
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "Token", result.Token);
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "Username", result.Username);
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "ClientId", result.ClientId);
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "UserMenus", JsonSerializer.Serialize(result.Menus));
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanCreate", result.Permissions.CanCreate.ToString().ToLower());
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanView", result.Permissions.CanView.ToString().ToLower());
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanUpdate", result.Permissions.CanUpdate.ToString().ToLower());
+                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanDelete", result.Permissions.CanDelete.ToString().ToLower());
 
                     return true;
                 }
@@ -82,11 +116,10 @@ namespace DashboardApp.Services
 
         public async Task<HttpResponseMessage> ChangePasswordAsync(ChangePasswordModel model)
         {
+            await InitializeClientIdAsync(); 
             var body = JsonSerializer.Serialize(model);
             AddSecurityHeaders("POST", "api/auth/change-password", body);
-            
             var response = await _httpClient.PostAsJsonAsync("/api/auth/change-password", model);
-
             return response;
         }
 
