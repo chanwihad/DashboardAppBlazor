@@ -1,4 +1,5 @@
 @page "/product"
+@attribute [Authorize]
 @using DashboardApp.Services
 @using DashboardApp.Models
 @inject ProductApiClient ProductService
@@ -61,10 +62,10 @@ else
 
     <div class="pagination justify-content-end">
         <select class="mx-2" @onchange="OnItemsPerPageChanged">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+            <option value="5" selected="@((PageSize == 5) ? "selected" : null)">5</option>
+            <option value="10" selected="@((PageSize == 10) ? "selected" : null)">10</option>
+            <option value="50" selected="@((PageSize == 50) ? "selected" : null)">50</option>
+            <option value="100" selected="@((PageSize == 100) ? "selected" : null)">100</option>
         </select>
 
         <button class="btn btn-info" @onclick="() => LoadProducts(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>

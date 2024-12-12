@@ -1,7 +1,9 @@
 @page "/user"
+@attribute [Authorize]
 @using DashboardApp.Services
 @using DashboardApp.Models
 @inject UserApiClient UserService
+@inject RoleApiClient RoleService
 @inject NavigationManager Navigation
 
 <PageTitle>User List</PageTitle>
@@ -67,10 +69,10 @@ else
 
     <div class="pagination justify-content-end">
         <select class="mx-2" @onchange="OnItemsPerPageChanged">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+            <option value="5" selected="@((PageSize == 5) ? "selected" : null)">5</option>
+            <option value="10" selected="@((PageSize == 10) ? "selected" : null)">10</option>
+            <option value="50" selected="@((PageSize == 50) ? "selected" : null)">50</option>
+            <option value="100" selected="@((PageSize == 100) ? "selected" : null)">100</option>
         </select>
 
         <button class="btn btn-info" @onclick="() => LoadUsers(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>
@@ -100,6 +102,51 @@ else
                         <label for="FullName">Full Name</label>
                         <InputText id="FullName" class="form-control" @bind-Value="currentUser.FullName" />
                     </div>
+                    <div class="form-group">
+                        <label for="Email">Email</label>
+                        <InputText id="Email" class="form-control" @bind-Value="currentUser.Email" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="RoleName">Role</label>
+                        <InputSelect id="RoleId" class="form-control" @bind-Value="currentUser.RoleId">
+                            <option value="">-- Select Role --</option>
+                            @foreach (var role in roles)
+                            {
+                                <option value="@role.Id">@role.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Password">Password</label>
+                        <InputText id="Password" type="password" class="form-control" @bind-Value="currentUser.Password" />
+                        <small class="form-text text-muted">Leave blank if you do not want to change the password.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ConfirmPassword">Confirm Password</label>
+                        <InputText id="ConfirmPassword" type="password" class="form-control" @bind-Value="currentUser.ConfirmPassword" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Status">Status</label>
+                        <InputSelect id="Status" class="form-control" @bind-Value="currentUser.Status">
+                            <option value="Active" selected="currentUser.Status == "Active"">Active</option>
+                            <option value="Inactive" selected="currentUser.Status == "Inactive"">Inactive</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="MaxRetry">Max Retry</label>
+                        <InputNumber id="MaxRetry" class="form-control" @bind-Value="currentUser.MaxRetry" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Retry">Retry</label>
+                        <InputNumber id="Retry" class="form-control" @bind-Value="currentUser.Retry" />
+                    </div>
+
                     <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary me-2">Save</button>
                         <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
@@ -116,8 +163,9 @@ else
 }
 
 @code {
-    private List<UserRequest> users = new List<UserRequest>();
+    private List<User> users = new List<User>();
     private UserRequest currentUser = new UserRequest();
+    private List<Role> roles = new List<Role>();
     private bool showModal = false;
     private string modalTitle;
     private string searchQuery = string.Empty;
@@ -149,13 +197,14 @@ else
         try
         {
             var response = await UserService.GetUsers(pageNumber, PageSize, searchQuery);
-            users = response?.Users ?? new List<UserRequest>();
+            users = response?.Users ?? new List<User>();
+            roles = await RoleService.GetRolesOnly("");
             TotalPages = response?.TotalPages ?? 1;
             PageNumber = response?.PageNumber ?? 1;
         }
         catch (HttpRequestException ex)
         {
-            users = new List<UserRequest>();
+            users = new List<User>();
             TotalPages = 1;
             Console.WriteLine($"Error loading users: {ex.Message}");
         }
@@ -209,9 +258,16 @@ else
         showModal = true;
     }
 
-    private void OpenEditUser(UserRequest user)
+    private void OpenEditUser(User user)
     {
-        currentUser = user;
+        currentUser.Id = user.Id;
+        currentUser.Username = user.Username;
+        currentUser.FullName = user.FullName;
+        currentUser.Email = user.Email;
+        currentUser.Status = user.Status;
+        currentUser.MaxRetry = user.MaxRetry;
+        currentUser.Retry = user.Retry;
+        currentUser.RoleId = user.RoleId;
         modalTitle = "Edit User";
         showModal = true;
     }
@@ -223,18 +279,24 @@ else
 
     private async Task SaveUser()
     {
-        if (string.IsNullOrEmpty(currentUser.Username) || string.IsNullOrEmpty(currentUser.FullName))
-        {
-            return;
-        }
 
         if (currentUser.Id == 0)
         {
-            
+            var response = await UserService.CreateUser(currentUser);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadUsers(PageNumber);
+                showModal = false;
+            }
         }
         else
         {
-           
+           var response = await UserService.UpdateUser(currentUser.Id, currentUser);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadUsers(PageNumber);
+                showModal = false;
+            }
         }
     }
 
@@ -243,7 +305,7 @@ else
         showModal = false;
     }
 
-    private async Task DeleteUser(UserRequest user)
+    private async Task DeleteUser(User user)
     {
         var response = await UserService.DeleteUser(user.Id);
         if (response.IsSuccessStatusCode)

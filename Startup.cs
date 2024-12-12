@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DashboardApp.Data;
 using DashboardApp.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace DashboardApp
 {
@@ -27,12 +28,14 @@ namespace DashboardApp
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
             services.AddScoped<AuthApiClient>(); 
             services.AddScoped<PermissionHelper>(); 
             services.AddScoped<UserApiClient>(); 
             services.AddScoped<RoleApiClient>(); 
             services.AddScoped<MenuApiClient>(); 
             services.AddScoped<ProductApiClient>(); 
+            services.AddScoped<PermissionHelper>(); 
 
             services.AddHttpClient<AuthApiClient>(client =>
             {
@@ -40,6 +43,7 @@ namespace DashboardApp
                 client.BaseAddress = new Uri(apiBaseUrl); 
             });
 
+            services.AddAuthorizationCore();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();

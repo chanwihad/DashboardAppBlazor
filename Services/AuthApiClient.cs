@@ -10,6 +10,8 @@ using DashboardApp.Models;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Json;  
 using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.Authorization;
+using DashboardApp.Services;
 
 namespace DashboardApp.Services
 {
@@ -21,38 +23,31 @@ namespace DashboardApp.Services
         private string _clientId;  
         private readonly string _secretKey;
         private readonly IJSRuntime _jsRuntime;
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
+        private readonly PermissionHelper _permissionHelper;
 
-        public AuthApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
+        public AuthApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime, AuthenticationStateProvider authenticationStateProvider, PermissionHelper permissionHelper)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _secretKey = _configuration["ApiSettings:SecretKey"];
             _jsRuntime = jsRuntime;
+            _authenticationStateProvider = authenticationStateProvider;
+            _permissionHelper = permissionHelper;
         }
 
         public async Task InitializeClientIdAsync()
         {
-            if (await CheckLoginAsync())
+            var isLogin = await _permissionHelper.CheckLogin();
+
+            if (isLogin)
             {
-                _clientId = await GetClientIdFromSession();
+                _clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
             }
             else
             {
                 throw new UnauthorizedAccessException("User is not logged in.");
             }
-        }
-
-        private async Task<bool> CheckLoginAsync()
-        {
-            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
-            var clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
-
-            return !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(clientId);
-        }
-
-        private async Task<string> GetClientIdFromSession()
-        {
-            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
         }
 
         public async Task<bool> RegisterAsync(string username, string fullName, string email, string password)
@@ -107,6 +102,9 @@ namespace DashboardApp.Services
                     await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanUpdate", result.Permissions.CanUpdate.ToString().ToLower());
                     await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "CanDelete", result.Permissions.CanDelete.ToString().ToLower());
 
+                    var authStateProvider = (CustomAuthenticationStateProvider)_authenticationStateProvider;
+                    authStateProvider.NotifyAuthenticationStateChanged();
+
                     return true;
                 }
             }
@@ -143,6 +141,15 @@ namespace DashboardApp.Services
 
             return response;
         }
+
+        public async Task<bool> LogoutAsync()
+        {
+            await _jsRuntime.InvokeVoidAsync("sessionStorage.clear");
+            var authStateProvider = (CustomAuthenticationStateProvider)_authenticationStateProvider;
+            authStateProvider.NotifyAuthenticationStateChanged();
+            return true;
+        }
+
 
         private string GenerateSignature(string method, string rawUrl, string clientId, string timeStamp, string body)
         {

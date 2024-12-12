@@ -21,39 +21,31 @@ namespace DashboardApp.Services
         private string _clientId;  
         private readonly string _secretKey;    
         private readonly IJSRuntime _jsRuntime;
+        private readonly PermissionHelper _permissionHelper;
 
-        public MenuApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
+        public MenuApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime, PermissionHelper permissionHelper)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
             _secretKey = _configuration["ApiSettings:SecretKey"];
             _jsRuntime = jsRuntime;
+            _permissionHelper = permissionHelper;
         }
 
         public async Task InitializeClientIdAsync()
         {
-            if (await CheckLoginAsync())
+            var isLogin = await _permissionHelper.CheckLogin();
+            var canView = await _permissionHelper.HasAccess("CanView", "api/menu");
+
+            if (isLogin && canView)
             {
-                _clientId = await GetClientIdFromSession();
+                _clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
             }
             else
             {
                 throw new UnauthorizedAccessException("User is not logged in.");
             }
-        }
-
-        private async Task<bool> CheckLoginAsync()
-        {
-            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
-            var clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
-
-            return !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(clientId);
-        }
-
-        private async Task<string> GetClientIdFromSession()
-        {
-            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
         }
 
         public async Task<MenuResponse> GetMenusAsync(int page, int itemsPerPage, string searchQuery = "")
@@ -64,11 +56,11 @@ namespace DashboardApp.Services
                 $"/api/menu?pageNumber={page}&pageSize={itemsPerPage}&searchQuery={searchQuery}");
         }
 
-        public async Task<List<Menu>> GetMenusOnly(string searchQuery = "")
+        public async Task<List<MenuForSelect>> GetMenusOnly(string searchQuery = "")
         {
             await InitializeClientIdAsync(); 
             AddSecurityHeaders("GET", "api/menu", "");
-            var response = await _httpClient.GetFromJsonAsync<List<Menu>>($"api/menu?searchQuery={searchQuery}");
+            var response = await _httpClient.GetFromJsonAsync<List<MenuForSelect>>($"api/menu/Get?searchQuery={searchQuery}");
             return response;
         }
 

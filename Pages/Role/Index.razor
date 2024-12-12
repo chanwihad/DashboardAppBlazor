@@ -1,7 +1,9 @@
 @page "/role"
+@attribute [Authorize]
 @using DashboardApp.Services
 @using DashboardApp.Models
 @inject RoleApiClient RoleService
+@inject MenuApiClient MenuService
 @inject NavigationManager Navigation
 
 <PageTitle>Role List</PageTitle>
@@ -61,10 +63,10 @@ else
 
     <div class="pagination justify-content-end">
         <select class="mx-2" @onchange="OnItemsPerPageChanged">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+            <option value="5" selected="@((PageSize == 5) ? "selected" : null)">5</option>
+            <option value="10" selected="@((PageSize == 10) ? "selected" : null)">10</option>
+            <option value="50" selected="@((PageSize == 50) ? "selected" : null)">50</option>
+            <option value="100" selected="@((PageSize == 100) ? "selected" : null)">100</option>
         </select>
 
         <button class="btn btn-info" @onclick="() => LoadRoles(PageNumber - 1)" disabled="@((PageNumber <= 1))">Prev</button>
@@ -83,17 +85,63 @@ else
                 <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
-                <EditForm Model="currentRole" OnValidSubmit="SaveRole">
+                <EditForm Model="tempRole" OnValidSubmit="SaveRole">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
+
                     <div class="form-group">
                         <label for="Name">Name</label>
-                        <InputText id="Name" class="form-control" @bind-Value="currentRole.Name" />
+                        <InputText id="Name" class="form-control" @bind-Value="tempRole.Name" />
                     </div>
                     <div class="form-group">
                         <label for="Description">Description</label>
-                        <InputText id="Description" class="form-control" @bind-Value="currentRole.Description" />
+                        <InputText id="Description" class="form-control" @bind-Value="tempRole.Description" />
                     </div>
+                    <div class="form-group">
+                        <label>Menus</label>
+                        <div style="border: 1px solid #ccc; height: 200px; overflow-y: auto;">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Menu Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var menu in menus)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <InputCheckbox @bind-Value="menu.IsSelected" />
+                                            </td>
+                                            <td>@menu.Name</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Permissions</label>
+                        <div class="form-check">
+                            <InputCheckbox id="CanView" class="form-check-input" @bind-Value="tempRole.CanView" />
+                            <label for="CanView" class="form-check-label">Can View</label>
+                        </div>
+                        <div class="form-check">
+                            <InputCheckbox id="CanCreate" class="form-check-input" @bind-Value="tempRole.CanCreate" />
+                            <label for="CanCreate" class="form-check-label">Can Create</label>
+                        </div>
+                        <div class="form-check">
+                            <InputCheckbox id="CanUpdate" class="form-check-input" @bind-Value="tempRole.CanUpdate" />
+                            <label for="CanUpdate" class="form-check-label">Can Update</label>
+                        </div>
+                        <div class="form-check">
+                            <InputCheckbox id="CanDelete" class="form-check-input" @bind-Value="tempRole.CanDelete" />
+                            <label for="CanDelete" class="form-check-label">Can Delete</label>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary me-2">Save</button>
                         <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
@@ -112,6 +160,8 @@ else
 @code {
     private List<Role> roles = new List<Role>();
     private Role currentRole = new Role();
+    private RoleRequest tempRole = new RoleRequest();
+    private List<MenuForSelect> menus = new List<MenuForSelect>();
     private bool showModal = false;
     private string modalTitle;
     private string searchQuery = string.Empty;
@@ -119,6 +169,9 @@ else
     private int PageSize = 5;
     private int TotalPages = 1;
     private bool isLoading = false;
+    private bool selectAll;
+    private HashSet<int> selectedMenuIds = new HashSet<int>();
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,6 +197,7 @@ else
         {
             var response = await RoleService.GetRoles(pageNumber, PageSize, searchQuery);
             roles = response?.Roles ?? new List<Role>();
+            menus = await MenuService.GetMenusOnly("");
             TotalPages = response?.TotalPages ?? 1;
             PageNumber = response?.PageNumber ?? 1;
         }
@@ -198,37 +252,68 @@ else
 
     private void OpenCreateRole()
     {
-        currentRole = new Role();
+        tempRole = new RoleRequest();
         modalTitle = "Add Role";
         showModal = true;
     }
 
     private void OpenEditRole(Role role)
     {
-        currentRole = role;
+        tempRole.Id = role.Id;
+        tempRole.Name = role.Name;
+        tempRole.Description = role.Description;
+        tempRole.CanView = role.CanView;
+        tempRole.CanCreate = role.CanCreate;
+        tempRole.CanUpdate = role.CanUpdate;
+        tempRole.CanDelete = role.CanDelete;
+        foreach (var menu in menus)
+        {
+            if (tempRole.MenuIds.Contains(menu.Id))
+            {
+                menu.IsSelected = true;
+            }
+        }
+
         modalTitle = "Edit Role";
         showModal = true;
     }
 
     private void CloseModal()
     {
+        foreach (var menu in menus)
+        {
+            menu.IsSelected = false;
+        }
         showModal = false;
     }
 
     private async Task SaveRole()
     {
-        if (string.IsNullOrEmpty(currentRole.Name) || string.IsNullOrEmpty(currentRole.Description))
+        Console.WriteLine(tempRole);
+        if (string.IsNullOrEmpty(tempRole.Name) || string.IsNullOrEmpty(tempRole.Description))
         {
             return;
         }
 
-        if (currentRole.Id == 0)
+        tempRole.MenuIds = menus.Where(m => m.IsSelected).Select(m => m.Id).ToList();
+
+        if (tempRole.Id == 0)
         {
-            
+            var response = await RoleService.CreateRole(tempRole);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadRoles(PageNumber);
+                showModal = false;
+            }
         }
         else
         {
-           
+            var response = await RoleService.UpdateRole(tempRole.Id, tempRole);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadRoles(PageNumber);
+                showModal = false;
+            }
         }
     }
 
@@ -245,5 +330,34 @@ else
             await LoadRoles(PageNumber);
         }
     }
+
+    private void ToggleAllCheckboxes(ChangeEventArgs e)
+    {
+        var isChecked = (bool)e.Value;
+        if (isChecked)
+        {
+            // Pilih semua menu
+            selectedMenuIds = new HashSet<int>(menus.Select(m => m.Id));
+        }
+        else
+        {
+            // Hapus semua pilihan
+            selectedMenuIds.Clear();
+        }
+    }
+
+
+    private void ToggleMenuSelection(int menuId)
+    {
+        if (selectedMenuIds.Contains(menuId))
+        {
+            selectedMenuIds.Remove(menuId);
+        }
+        else
+        {
+            selectedMenuIds.Add(menuId);
+        }
+    }
+
 
 }

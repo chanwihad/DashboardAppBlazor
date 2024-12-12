@@ -1,24 +1,40 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@using DashboardApp.Services
+@inject AuthApiClient AuthApiClient
 
 <div class="sidebar">
     <NavMenu />
 </div>
 
 <div class="main">
-    <div class="top-row px-4">
-        <div class="dropdown">
-            <button class="btn btn-link dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                Admin
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="userMenu">
-                <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><button class="dropdown-item text-danger" @onclick="Logout">Logout</button></li>
-            </ul>
-        </div>
-    </div>
+    <AuthorizeView>
+        <Authorized>
+            <div class="top-row px-4">
+                <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        Admin
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="userMenu">
+                        <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item text-danger" @onclick="Logout">Logout</button></li>
+                    </ul>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="top-row px-4">
+                <div class="dropdown">
+                    <a class="btn" href="/login">
+                        Login
+                    </a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+
 
 
     <div class="content px-4">
@@ -29,16 +45,17 @@
 @code {
     private async Task Logout()
     {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "Token");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "Username");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "ClientId");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "UserMenus");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanCreate");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanView");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanUpdate");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "CanDelete");
-
-        Navigation.NavigateTo("/login", true);
+        try
+        {
+            var response = await AuthApiClient.LogoutAsync();
+            if(response)
+                Navigation.NavigateTo("/login", true);
+            
+        }
+        catch (Exception ex)
+        {
+            Navigation.NavigateTo("/");
+        }
     }
 
     private async Task ChangePassword()

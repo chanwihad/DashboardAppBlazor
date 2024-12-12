@@ -22,39 +22,31 @@ namespace DashboardApp.Services
         private string _clientId;  
         private readonly string _secretKey;    
         private readonly IJSRuntime _jsRuntime;
+        private readonly PermissionHelper _permissionHelper;
 
-        public UserApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
+        public UserApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime, PermissionHelper permissionHelper)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
             _secretKey = _configuration["ApiSettings:SecretKey"];
             _jsRuntime = jsRuntime;
+            _permissionHelper = permissionHelper;
         }
 
         public async Task InitializeClientIdAsync()
         {
-            if (await CheckLoginAsync())
+            var isLogin = await _permissionHelper.CheckLogin();
+            var canView = await _permissionHelper.HasAccess("CanView", "api/user");
+
+            if (isLogin && canView)
             {
-                _clientId = await GetClientIdFromSession();
+                _clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
             }
             else
             {
                 throw new UnauthorizedAccessException("User is not logged in.");
             }
-        }
-
-        private async Task<bool> CheckLoginAsync()
-        {
-            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "Token");
-            var clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
-
-            return !string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(clientId);
-        }
-
-        private async Task<string> GetClientIdFromSession()
-        {
-            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
         }
 
         public async Task<UserResponse> GetUsers(int page, int itemsPerPage, string searchQuery = "")
@@ -73,7 +65,7 @@ namespace DashboardApp.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> CreateUser(UserCreateViewModel model)
+        public async Task<HttpResponseMessage> CreateUser(UserRequest model)
         {
             await InitializeClientIdAsync(); 
             var body = JsonSerializer.Serialize(model);
@@ -82,7 +74,7 @@ namespace DashboardApp.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> UpdateUser(int id, User model)
+        public async Task<HttpResponseMessage> UpdateUser(int id, UserRequest model)
         {
             await InitializeClientIdAsync(); 
             var body = JsonSerializer.Serialize(model);

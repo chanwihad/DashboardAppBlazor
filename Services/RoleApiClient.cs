@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using DashboardApp.Models;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Json; 
+using System.Collections.Generic;
 using Microsoft.JSInterop;
 
 namespace DashboardApp.Services
@@ -20,107 +21,87 @@ namespace DashboardApp.Services
         private string _clientId;  
         private readonly string _secretKey;    
         private readonly IJSRuntime _jsRuntime;
+        private readonly PermissionHelper _permissionHelper;
 
-        public RoleApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime)
+        public RoleApiClient(HttpClient httpClient, IConfiguration configuration, IJSRuntime jsRuntime, PermissionHelper permissionHelper)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
             _secretKey = _configuration["ApiSettings:SecretKey"];
             _jsRuntime = jsRuntime;
+            _permissionHelper = permissionHelper;
         }
 
         public async Task InitializeClientIdAsync()
         {
-            _clientId = await GetClientIdFromSession();
-        }
+            var isLogin = await _permissionHelper.CheckLogin();
+            var canView = await _permissionHelper.HasAccess("CanView", "api/role");
 
-        private async Task<string> GetClientIdFromSession()
-        {
-            return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
-        }
-
-        public async Task<bool> IsLoggedInAsync()
-        {
-            var clientId = await GetClientIdFromSession();
-            return !string.IsNullOrEmpty(clientId); 
+            if (isLogin && canView)
+            {
+                _clientId = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "ClientId");
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("User is not logged in.");
+            }
         }
 
         public async Task<RoleResponse> GetRoles(int page, int itemsPerPage, string searchQuery = "")
         {
-            if (await IsLoggedInAsync())
-            {
-                AddSecurityHeaders("GET", "api/role", "");
-                return await _httpClient.GetFromJsonAsync<RoleResponse>(
-                $"/api/role?pageNumber={page}&pageSize={itemsPerPage}&searchQuery={searchQuery}");
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("User is not logged in.");
-            }
+            await InitializeClientIdAsync(); 
+            AddSecurityHeaders("GET", "api/role", "");
+            return await _httpClient.GetFromJsonAsync<RoleResponse>(
+            $"/api/role?pageNumber={page}&pageSize={itemsPerPage}&searchQuery={searchQuery}");   
+        }
+
+        public async Task<List<Role>> GetRolesOnly(string searchQuery = "")
+        {
+            await InitializeClientIdAsync(); 
+            AddSecurityHeaders("GET", "api/role", "");
+            var response = await _httpClient.GetFromJsonAsync<List<Role>>($"api/role/Get?searchQuery={searchQuery}");
+            return response;
         }
 
         public async Task<HttpResponseMessage> CreateRole(RoleRequest model)
         {
-            if (await IsLoggedInAsync())
-            {
-                var body = JsonSerializer.Serialize(model);
-                AddSecurityHeaders("POST", "api/role", body);
-                var response = await _httpClient.PostAsJsonAsync("api/role", model);
-                return response;
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("User is not logged in.");
-            }
+            await InitializeClientIdAsync(); 
+            var body = JsonSerializer.Serialize(model);
+            AddSecurityHeaders("POST", "api/role", body);
+            var response = await _httpClient.PostAsJsonAsync("api/role", model);
+            return response;
         }
 
         public async Task<RoleRequest> GetRole(int id)
         {
-            if (await IsLoggedInAsync())
-            {
-                AddSecurityHeaders("GET", $"api/role/{id}", "");
-                var response = await _httpClient.GetFromJsonAsync<RoleRequest>($"api/role/{id}");
-                return response;
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("User is not logged in.");
-            }
+            await InitializeClientIdAsync(); 
+            AddSecurityHeaders("GET", $"api/role/{id}", "");
+            var response = await _httpClient.GetFromJsonAsync<RoleRequest>($"api/role/{id}");
+            return response;
+            
         }
 
         public async Task<HttpResponseMessage> UpdateRole(int id, RoleRequest model)
         {
-            if (await IsLoggedInAsync())
+            await InitializeClientIdAsync(); 
+            var body = JsonSerializer.Serialize(model);
+            AddSecurityHeaders("PUT", $"api/role/{id}", body);
+            var response = await _httpClient.PutAsJsonAsync($"api/role/{id}", model);
+            if (!response.IsSuccessStatusCode)
             {
-                var body = JsonSerializer.Serialize(model);
-                AddSecurityHeaders("PUT", $"api/role/{id}", body);
-                var response = await _httpClient.PutAsJsonAsync($"api/role/{id}", model);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Error: {response.StatusCode}, Content: {errorContent}");
-                }
-                return response;
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.StatusCode}, Content: {errorContent}");
             }
-            else
-            {
-                throw new UnauthorizedAccessException("User is not logged in.");
-            }
+            return response;
         }
 
         public async Task<HttpResponseMessage> DeleteRole(int id)
         {
-            if (await IsLoggedInAsync())
-            {
-                AddSecurityHeaders("DELETE", $"api/role/{id}", "");
-                var response = await _httpClient.DeleteAsync($"api/role/{id}");
-                return response;
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("User is not logged in.");
-            }
+            await InitializeClientIdAsync(); 
+            AddSecurityHeaders("DELETE", $"api/role/{id}", "");
+            var response = await _httpClient.DeleteAsync($"api/role/{id}");
+            return response;
         }
 
         private string GenerateSignature(string method, string rawUrl, string clientId, string timeStamp, string body)
