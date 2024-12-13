@@ -30,16 +30,9 @@ else
         </div>
     </form>
 
-    @if (products.Count == 0)
-    {
-        <div class="alert alert-warning" role="alert">
-            No products found matching your search.
-        </div>
-    }
-
-    <table class="table">
+    <table class="table table-striped">
         <thead>
-            <tr>
+            <tr style="border-bottom: 2px solid #ddd;">
                 <th>Name</th>
                 <th>Price</th>
                 <th>Actions</th>

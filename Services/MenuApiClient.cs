@@ -58,7 +58,7 @@ namespace DashboardApp.Services
 
         public async Task<List<MenuForSelect>> GetMenusOnly(string searchQuery = "")
         {
-            await InitializeClientIdAsync(); 
+            // await InitializeClientIdAsync(); 
             AddSecurityHeaders("GET", "api/menu", "");
             var response = await _httpClient.GetFromJsonAsync<List<MenuForSelect>>($"api/menu/Get?searchQuery={searchQuery}");
             return response;

@@ -31,16 +31,10 @@ else
         </div>
     </form>
 
-    @if (roles.Count == 0)
-    {
-        <div class="alert alert-warning" role="alert">
-            No roles found matching your search.
-        </div>
-    }
 
-    <table class="table">
+    <table class="table table-striped">
         <thead>
-            <tr>
+            <tr style="border-bottom: 2px solid #ddd;">
                 <th>Name</th>
                 <th>Description</th>
                 <th>Actions</th>
@@ -85,17 +79,20 @@ else
                 <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="alert alert-danger" role="alert" style="display:@(string.IsNullOrEmpty(errorMessage) ? "none" : "block")">
+                    @errorMessage
+                </div>
                 <EditForm Model="tempRole" OnValidSubmit="SaveRole">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
 
                     <div class="form-group">
                         <label for="Name">Name</label>
-                        <InputText id="Name" class="form-control" @bind-Value="tempRole.Name" />
+                        <InputText id="Name" class="form-control" required @bind-Value="tempRole.Name" />
                     </div>
                     <div class="form-group">
                         <label for="Description">Description</label>
-                        <InputText id="Description" class="form-control" @bind-Value="tempRole.Description" />
+                        <InputText id="Description" class="form-control" required @bind-Value="tempRole.Description" />
                     </div>
                     <div class="form-group">
                         <label>Menus</label>
@@ -159,7 +156,6 @@ else
 
 @code {
     private List<Role> roles = new List<Role>();
-    private Role currentRole = new Role();
     private RoleRequest tempRole = new RoleRequest();
     private List<MenuForSelect> menus = new List<MenuForSelect>();
     private bool showModal = false;
@@ -171,6 +167,7 @@ else
     private bool isLoading = false;
     private bool selectAll;
     private HashSet<int> selectedMenuIds = new HashSet<int>();
+    private string errorMessage = string.Empty;
 
 
     protected override async Task OnInitializedAsync()
@@ -252,6 +249,7 @@ else
 
     private void OpenCreateRole()
     {
+        errorMessage = string.Empty;
         tempRole = new RoleRequest();
         modalTitle = "Add Role";
         showModal = true;
@@ -259,6 +257,7 @@ else
 
     private void OpenEditRole(Role role)
     {
+        errorMessage = string.Empty;
         tempRole.Id = role.Id;
         tempRole.Name = role.Name;
         tempRole.Description = role.Description;
@@ -280,6 +279,7 @@ else
 
     private void CloseModal()
     {
+        errorMessage = string.Empty;
         foreach (var menu in menus)
         {
             menu.IsSelected = false;
@@ -289,33 +289,49 @@ else
 
     private async Task SaveRole()
     {
-        Console.WriteLine(tempRole);
-        if (string.IsNullOrEmpty(tempRole.Name) || string.IsNullOrEmpty(tempRole.Description))
-        {
-            return;
-        }
+        errorMessage = string.Empty;
 
-        tempRole.MenuIds = menus.Where(m => m.IsSelected).Select(m => m.Id).ToList();
-
-        if (tempRole.Id == 0)
+        try
         {
-            var response = await RoleService.CreateRole(tempRole);
-            if (response.IsSuccessStatusCode)
+            tempRole.MenuIds = menus.Where(m => m.IsSelected).Select(m => m.Id).ToList();
+
+            if (tempRole.Id == 0)
             {
-                await LoadRoles(PageNumber);
-                showModal = false;
+                var response = await RoleService.CreateRole(tempRole);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadRoles(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync(); 
+                }
+            }
+            else
+            {
+                var response = await RoleService.UpdateRole(tempRole.Id, tempRole);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadRoles(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync(); 
+                }
             }
         }
-        else
+        catch (HttpRequestException ex)
         {
-            var response = await RoleService.UpdateRole(tempRole.Id, tempRole);
-            if (response.IsSuccessStatusCode)
-            {
-                await LoadRoles(PageNumber);
-                showModal = false;
-            }
+            errorMessage = $"Failed to communicate with the server: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
         }
     }
+
 
     private void CancelEdit()
     {

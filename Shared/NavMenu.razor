@@ -1,4 +1,8 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
+﻿@inject IJSRuntime JSRuntime
+@using DashboardApp.Services
+@inject PermissionHelper PermissionHelper
+
+<div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">DashboardApp</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
@@ -9,39 +13,53 @@
     <ul class="nav flex-column">
         <AuthorizeView>
             <Authorized>
-                <li class="nav-item px-3">
-                    <a class="nav-link" @onclick="ToggleProducts">
-                        <span class="oi oi-box" aria-hidden="true"></span> Products
-                    </a>
-                    @if (showProducts)
-                    {
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <NavLink class="nav-link" href="product">List</NavLink>
-                            </li>
-                        </ul>
-                    }
-                </li>
-                
-                <li class="nav-item px-3">
-                    <a class="nav-link" @onclick="ToggleUserManagement">
-                        <span class="oi oi-people" aria-hidden="true"></span> User Management
-                    </a>
-                    @if (showUserManagement)
-                    {
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <NavLink class="nav-link" href="user">User</NavLink>
-                            </li>
-                            <li class="nav-item">
-                                <NavLink class="nav-link" href="role">Role</NavLink>
-                            </li>
-                            <li class="nav-item">
-                                <NavLink class="nav-link" href="menu">Menu</NavLink>
-                            </li>
-                        </ul>
-                    }
-                </li>
+                @if(CanProduct)
+                {
+                    <li class="nav-item px-3">
+                        <a class="nav-link" @onclick="ToggleProducts">
+                            <span class="oi oi-box" aria-hidden="true"></span> Products
+                        </a>
+                        @if (showProducts)
+                        {
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <NavLink class="nav-link" href="product">List</NavLink>
+                                </li>
+                            </ul>
+                        }
+                    </li>
+                }
+                @if(CanUser || CanRole || CanMenu)
+                {
+                    <li class="nav-item px-3">
+                        <a class="nav-link" @onclick="ToggleUserManagement">
+                            <span class="oi oi-people" aria-hidden="true"></span> User Management
+                        </a>
+                        @if (showUserManagement)
+                        {
+                            <ul class="nav flex-column ms-3">
+                                @if(CanUser)
+                                {
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="user">User</NavLink>
+                                    </li>
+                                }
+                                @if(CanRole)
+                                {
+                                    <li class="nav-item">
+                                        <NavLink class="nav-link" href="role">Role</NavLink>
+                                    </li>
+                                }
+                                @if(CanMenu)
+                                {
+                                <li class="nav-item">
+                                    <NavLink class="nav-link" href="menu">Menu</NavLink>
+                                </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                }
             </Authorized>
         </AuthorizeView>
     </ul>
@@ -51,6 +69,29 @@
     private bool collapseNavMenu = true;
     private bool showUserManagement = false;
     private bool showProducts = false;
+
+    private bool CanMenu = false;
+    private bool CanRole = false;
+    private bool CanUser = false;
+    private bool CanProduct = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var isLogin = await PermissionHelper.CheckLogin();
+            if (isLogin)
+            {   
+                    CanUser = await PermissionHelper.HasAccess("CanView", "api/user");
+                    CanRole = await PermissionHelper.HasAccess("CanView", "api/role");
+                    CanMenu = await PermissionHelper.HasAccess("CanView", "api/menu");
+                    CanProduct = await PermissionHelper.HasAccess("CanView", "api/product");
+                
+            }
+
+            StateHasChanged();
+        }
+    }
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 

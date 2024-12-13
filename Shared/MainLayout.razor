@@ -2,6 +2,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @using DashboardApp.Services
+@inject PermissionHelper PermissionHelper
 @inject AuthApiClient AuthApiClient
 
 <div class="sidebar">
@@ -14,7 +15,7 @@
             <div class="top-row px-4">
                 <div class="dropdown">
                     <button class="btn btn-link dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        Admin
+                        @Username
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="userMenu">
                         <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
@@ -43,6 +44,23 @@
 </div>
 
 @code {
+    private string Username = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var isLogin = await PermissionHelper.CheckLogin();
+            if (isLogin)
+            {
+                Username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "Username");
+            }
+
+            StateHasChanged();
+        }
+    }
+
+
     private async Task Logout()
     {
         try

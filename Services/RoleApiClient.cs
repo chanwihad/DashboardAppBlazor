@@ -58,7 +58,7 @@ namespace DashboardApp.Services
 
         public async Task<List<Role>> GetRolesOnly(string searchQuery = "")
         {
-            await InitializeClientIdAsync(); 
+            // await InitializeClientIdAsync(); 
             AddSecurityHeaders("GET", "api/role", "");
             var response = await _httpClient.GetFromJsonAsync<List<Role>>($"api/role/Get?searchQuery={searchQuery}");
             return response;

@@ -6,7 +6,7 @@
 @inject AuthApiClient AuthApiClient
 @inject PermissionHelper PermissionHelper
 
-<h3>Login</h3>
+<h2>Login</h2>
 
 <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
     <DataAnnotationsValidator />
@@ -20,6 +20,9 @@
         <label for="password">Password</label>
         <InputText type="password" id="password" class="form-control" @bind-Value="loginModel.Password" />
     </div>
+    <br>
+    <a href="/forgot-password">Forgot Password?</a>
+    <br>
     <button type="submit" class="btn btn-primary">Login</button>
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -54,9 +57,11 @@
         {
             var response = await AuthApiClient.LoginAsync(loginModel.Username, loginModel.Password);
             if(response)
-                Navigation.NavigateTo("/");
+                Navigation.NavigateTo("/", true);
+            else
+                errorMessage = "Username or Password is wrong. Please Try Again";
             
-            errorMessage = "Username or Password is wrong. Please Try Again";
+            
         }
         catch (Exception ex)
         {

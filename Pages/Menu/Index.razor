@@ -30,16 +30,9 @@ else
         </div>
     </form>
 
-    @if (menus.Count == 0)
-    {
-        <div class="alert alert-warning" role="alert">
-            No menus found matching your search.
-        </div>
-    }
-
-    <table class="table">
+    <table class="table table-striped">
         <thead>
-            <tr>
+            <tr style="border-bottom: 2px solid #ddd;">
                 <th>Name</th>
                 <th>Description</th>
                 <th>Actions</th>
@@ -84,6 +77,9 @@ else
                 <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="alert alert-danger" role="alert" style="display:@(string.IsNullOrEmpty(errorMessage) ? "none" : "block")">
+                    @errorMessage
+                </div>
                 <EditForm Model="currentMenu" OnValidSubmit="SaveMenu">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
@@ -144,6 +140,7 @@ else
     private int PageSize = 5;
     private int TotalPages = 1;
     private bool isLoading = false;
+    private string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -223,6 +220,7 @@ else
 
     private void OpenCreateMenu()
     {
+        errorMessage = string.Empty;
         currentMenu = new Menu();
         modalTitle = "Add Menu";
         showModal = true;
@@ -230,6 +228,7 @@ else
 
     private void OpenEditMenu(Menu menu)
     {
+        errorMessage = string.Empty;
         currentMenu = menu;
         modalTitle = "Edit Menu";
         showModal = true;
@@ -237,35 +236,53 @@ else
 
     private void CloseModal()
     {
+        errorMessage = string.Empty;
         showModal = false;
     }
 
     private async Task SaveMenu()
     {
-        if (string.IsNullOrEmpty(currentMenu.Name) || string.IsNullOrEmpty(currentMenu.Description))
-        {
-            return;
-        }
+        errorMessage = string.Empty;
 
-        if (currentMenu.Id == 0)
+        try
         {
-            var response = await MenuService.CreateMenu(currentMenu);
-            if (response.IsSuccessStatusCode)
+            if (currentMenu.Id == 0)
             {
-                await LoadMenus(PageNumber);
-                showModal = false;
+                var response = await MenuService.CreateMenu(currentMenu);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadMenus(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync(); 
+                }
+            }
+            else
+            {
+                var response = await MenuService.UpdateMenu(currentMenu.Id, currentMenu);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadMenus(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync(); 
+                }
             }
         }
-        else
+        catch (HttpRequestException ex)
         {
-            var response = await MenuService.UpdateMenu(currentMenu.Id, currentMenu);
-            if (response.IsSuccessStatusCode)
-            {
-                await LoadMenus(PageNumber);
-                showModal = false;
-            }
+            errorMessage = $"Failed to communicate with the server: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
         }
     }
+
 
     private void CancelEdit()
     {

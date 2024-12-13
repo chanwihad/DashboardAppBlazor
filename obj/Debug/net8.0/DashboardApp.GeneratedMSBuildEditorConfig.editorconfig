@@ -9,79 +9,79 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = DashboardApp
 build_property.RootNamespace = DashboardApp
-build_property.ProjectDir = /Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/
+build_property.ProjectDir = C:\Users\Kings\Documents\Project\Blazor\DashboardApp\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor
+build_property.MSBuildProjectDirectory = C:\Users\Kings\Documents\Project\Blazor\DashboardApp
 build_property._RazorSourceGeneratorDebug = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/App.razor]
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Auth/ChangePassword.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aC9DaGFuZ2VQYXNzd29yZC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/ChangePassword.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxDaGFuZ2VQYXNzd29yZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Auth/ForgetPassword.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aC9Gb3JnZXRQYXNzd29yZC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/ForgetPassword.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxGb3JnZXRQYXNzd29yZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Auth/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aC9Mb2dpbi5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Auth/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Counter.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ291bnRlci5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/FetchData.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRmV0Y2hEYXRhLnJhem9y
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/FetchData.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRmV0Y2hEYXRhLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW5kZXgucmF6b3I=
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Menu/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTWVudS9JbmRleC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Menu/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWVudVxJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Product/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUHJvZHVjdC9JbmRleC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Product/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdFxJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Role/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUm9sZS9JbmRleC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Role/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUm9sZVxJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/User/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVXNlci9JbmRleC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/User/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlclxJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Shared/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL01haW5MYXlvdXQucmF6b3I=
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Shared/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL05hdk1lbnUucmF6b3I=
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Shared/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Shared/SurveyPrompt.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL1N1cnZleVByb21wdC5yYXpvcg==
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Shared/SurveyPrompt.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFN1cnZleVByb21wdC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/_Imports.razor]
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/Error.cshtml]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXJyb3IuY3NodG1s
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/chandra/Documents/SKRIPSI/Projek/DashboardBlazor/Frontend/DashboardAppBlazor/Pages/_Host.cshtml]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvX0hvc3QuY3NodG1s
+[C:/Users/Kings/Documents/Project/Blazor/DashboardApp/Pages/_Host.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0hvc3QuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

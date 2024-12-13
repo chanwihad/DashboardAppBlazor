@@ -23,7 +23,7 @@ else
     <form method="get" @onsubmit="SearchUsers">
         <div class="d-flex w-100 mb-3">
             <div class="flex-grow-1">
-                <input type="text" class="form-control" style="width:99%" id="searchQuery" name="searchQuery" placeholder="Search by Name or Description" @bind="searchQuery">
+                <input type="text" class="form-control" style="width:99%" id="searchQuery" name="searchQuery" placeholder="Search" @bind="searchQuery">
             </div>
             <div class="ms-3">
                 <button type="submit" class="btn btn-primary">Search</button>
@@ -31,16 +31,9 @@ else
         </div>
     </form>
 
-    @if (users.Count == 0)
-    {
-        <div class="alert alert-warning" user="alert">
-            No users found matching your search.
-        </div>
-    }
-
-    <table class="table">
+    <table class="table table-striped">
         <thead>
-            <tr>
+            <tr style="border-bottom: 2px solid #ddd;">
                 <th>Username</th>
                 <th>Full Name</th>
                 <th>Email</th>
@@ -80,7 +73,6 @@ else
         <button class="btn btn-info" @onclick="() => LoadUsers(PageNumber + 1)" disabled="@((PageNumber >= TotalPages))">Next</button>
     </div>
 
-
 }
 
 <div class="modal" tabindex="-1" style="display:@(showModal ? "block" : "none")">
@@ -91,25 +83,29 @@ else
                 <button type="button" class="btn-close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="alert alert-danger" role="alert" style="display:@(string.IsNullOrEmpty(errorMessage) ? "none" : "block")">
+                    @errorMessage
+                </div>
+
                 <EditForm Model="currentUser" OnValidSubmit="SaveUser">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
                     <div class="form-group">
                         <label for="Username">Username</label>
-                        <InputText id="Username" class="form-control" @bind-Value="currentUser.Username" />
+                        <InputText id="Username" class="form-control" required @bind-Value="currentUser.Username" />
                     </div>
                     <div class="form-group">
                         <label for="FullName">Full Name</label>
-                        <InputText id="FullName" class="form-control" @bind-Value="currentUser.FullName" />
+                        <InputText id="FullName" class="form-control" required @bind-Value="currentUser.FullName" />
                     </div>
                     <div class="form-group">
                         <label for="Email">Email</label>
-                        <InputText id="Email" class="form-control" @bind-Value="currentUser.Email" />
+                        <InputText id="Email" class="form-control" required @bind-Value="currentUser.Email" />
                     </div>
 
                     <div class="form-group">
-                        <label for="RoleName">Role</label>
-                        <InputSelect id="RoleId" class="form-control" @bind-Value="currentUser.RoleId">
+                        <label for="RoleId">Role</label>
+                        <InputSelect id="RoleId" class="form-control" required @bind-Value="currentUser.RoleId">
                             <option value="">-- Select Role --</option>
                             @foreach (var role in roles)
                             {
@@ -131,7 +127,7 @@ else
 
                     <div class="form-group">
                         <label for="Status">Status</label>
-                        <InputSelect id="Status" class="form-control" @bind-Value="currentUser.Status">
+                        <InputSelect id="Status" class="form-control" required @bind-Value="currentUser.Status">
                             <option value="Active" selected="currentUser.Status == "Active"">Active</option>
                             <option value="Inactive" selected="currentUser.Status == "Inactive"">Inactive</option>
                         </InputSelect>
@@ -139,12 +135,12 @@ else
 
                     <div class="form-group">
                         <label for="MaxRetry">Max Retry</label>
-                        <InputNumber id="MaxRetry" class="form-control" @bind-Value="currentUser.MaxRetry" />
+                        <InputNumber id="MaxRetry" class="form-control" required @bind-Value="currentUser.MaxRetry" />
                     </div>
 
                     <div class="form-group">
                         <label for="Retry">Retry</label>
-                        <InputNumber id="Retry" class="form-control" @bind-Value="currentUser.Retry" />
+                        <InputNumber id="Retry" class="form-control" required @bind-Value="currentUser.Retry" />
                     </div>
 
                     <div class="d-flex justify-content-end">
@@ -173,6 +169,8 @@ else
     private int PageSize = 5;
     private int TotalPages = 1;
     private bool isLoading = false;
+    private string errorMessage = string.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,6 +251,7 @@ else
 
     private void OpenCreateUser()
     {
+        errorMessage = string.Empty;
         currentUser = new UserRequest();
         modalTitle = "Add User";
         showModal = true;
@@ -260,6 +259,7 @@ else
 
     private void OpenEditUser(User user)
     {
+        errorMessage = string.Empty;
         currentUser.Id = user.Id;
         currentUser.Username = user.Username;
         currentUser.FullName = user.FullName;
@@ -274,31 +274,67 @@ else
 
     private void CloseModal()
     {
+        errorMessage = string.Empty;
         showModal = false;
     }
 
     private async Task SaveUser()
     {
+        errorMessage = string.Empty;
 
-        if (currentUser.Id == 0)
+        if (!string.IsNullOrEmpty(currentUser.Password) && currentUser.Password != currentUser.ConfirmPassword)
         {
-            var response = await UserService.CreateUser(currentUser);
-            if (response.IsSuccessStatusCode)
+            errorMessage = "Password and Confirm Password do not match.";
+            return; 
+        }
+
+        try
+        {
+            if (currentUser.Id == 0)
             {
-                await LoadUsers(PageNumber);
-                showModal = false;
+                var response = await UserService.CreateUser(currentUser);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadUsers(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync();
+                }
+            }
+            else
+            {
+                if(currentUser.Password == null)
+                {
+                    currentUser.Password = "@#%empty021&^";
+                    currentUser.ConfirmPassword = "@#%empty021&^";
+                }
+
+                var response = await UserService.UpdateUser(currentUser.Id, currentUser);
+                if (response.IsSuccessStatusCode)
+                {
+                    await LoadUsers(PageNumber);
+                    showModal = false;
+                }
+                else
+                {
+                    if(currentUser.Password == "@#%empty021&^")
+                    {
+                        currentUser.Password = null;
+                        currentUser.ConfirmPassword = null;
+                    }
+
+                    errorMessage = await response.Content.ReadAsStringAsync();
+                }
             }
         }
-        else
+        catch (Exception ex)
         {
-           var response = await UserService.UpdateUser(currentUser.Id, currentUser);
-            if (response.IsSuccessStatusCode)
-            {
-                await LoadUsers(PageNumber);
-                showModal = false;
-            }
+            errorMessage = $"An error occurred: {ex.Message}";
         }
     }
+
 
     private void CancelEdit()
     {
